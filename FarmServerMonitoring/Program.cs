@@ -26,17 +26,6 @@ namespace FarmServerMonitoring
                 // Extract the data from email report to insert data records into the database
                 InsertMailReportDataIntoDatabase(mail.EmailBody);
 
-                //var bodyArray = mail.EmailBody.Split(new[] { "\r\n", "\n" }, StringSplitOptions.None);
-                //var filteredBodyArray = bodyArray.Where(x => !string.IsNullOrWhiteSpace(x)).ToArray();
-
-                //int j = 0;
-                //foreach (var line in filteredBodyArray)
-                //{
-                //    Console.WriteLine("Index [" + j + "]: " + line);
-                //    j++;
-                //}
-
-                Console.WriteLine("Report insertd successfully.");
                 Console.WriteLine(new string('=', 100));
                 i = i + 1;
             }
@@ -51,19 +40,30 @@ namespace FarmServerMonitoring
             var bodyArray = emailTextBody.Split(new[] { "\r\n", "\n" }, StringSplitOptions.None);
             var filteredBodyArray = bodyArray.Where(x => !string.IsNullOrWhiteSpace(x)).ToArray();
 
-            var reportId = InsertReportData(filteredBodyArray);
+            // Create a new instance of the database context to interact with the database
+            using (var context = new FarmServerMonitoringDB_TestContext())
+            {
+                var reportId = InsertReportData(filteredBodyArray, context);
 
-            InsertCollectionData(filteredBodyArray, reportId);
-            InsertConnectionBrokerData(filteredBodyArray, reportId);
+                // Check if the report has already existed in the database
+                var isReportExist = context.ServerHealthReport.Where(a => a.Id == reportId).Any();
+                if (isReportExist)
+                {
+                    Console.WriteLine("Duplicated Report.");
+                    return;
+                }
+
+                InsertCollectionData(filteredBodyArray, reportId, context);
+                InsertConnectionBrokerData(filteredBodyArray, reportId, context);
+
+                context.SaveChanges();
+            }
+            Console.WriteLine("Report insert successfully.");
         }
 
         // Insert the report to the database
-        static string InsertReportData(string[] emailBodyArray)
+        static string InsertReportData(string[] emailBodyArray, FarmServerMonitoringDB_TestContext context)
         {
-            
-            // Create a new instance of the database context to interact with the database
-            var context = new FarmServerMonitoringDB_TestContext();
-
             // Create a server health report
             try
             {
@@ -88,8 +88,6 @@ namespace FarmServerMonitoring
                     SessionsNullSum = Int32.Parse(emailBodyArray[214].Trim())
                 };
                 context.ServerHealthReport.Add(report);
-                context.SaveChanges();
-
                 return report.Id;
             }
             catch (Exception ex)
@@ -97,15 +95,11 @@ namespace FarmServerMonitoring
                 Console.WriteLine(ex.Message);
             }
             return "";
-
         }
 
         // Insert the collections to the database
-        static void InsertCollectionData(string[] emailBodyArray, string reportId)
+        static void InsertCollectionData(string[] emailBodyArray, string reportId, FarmServerMonitoringDB_TestContext context)
         {
-            // Create a new instance of the database context to interact with the database
-            var context = new FarmServerMonitoringDB_TestContext();
-
             // Get all the collections from the email body
             var collections = ExtractCollectionTableData(emailBodyArray);
 
@@ -119,57 +113,63 @@ namespace FarmServerMonitoring
                 // Get one row of collection data
                 var collectionRow = collections.Skip(i * numCol).Take(numCol).ToList();
 
-                // Create a collection
-                var collection = new Collection()
+                try {
+                    // Create a collection
+                    var collection = new Collection()
+                    {
+                        ReportId = reportId,
+                        ServerName = collectionRow[0],
+                        Enabled = collectionRow[1],
+                        CpuUsage = Double.Parse(collectionRow[2].Replace("%", "")),
+                        MemoryUsage = Double.Parse(collectionRow[3].Replace("%", "")),
+                        CdriveFreeSpace = Double.Parse(collectionRow[4].Replace("%", "")),
+                        DdriveFreeSpace = Double.Parse(collectionRow[5].Replace("%", "")),
+                        Uptime = collectionRow[6],
+                        PendingReboot = collectionRow[7],
+                        SessionsTotal = Int32.Parse(collectionRow[8]),
+                        SessionsActive = Int32.Parse(collectionRow[9]),
+                        SessionsDisc = Int32.Parse(collectionRow[10]),
+                        SessionsNull = Int32.Parse(collectionRow[11])
+                    };
+                    context.Collection.Add(collection);
+                }
+                catch (Exception ex)
                 {
-                    ReportId = reportId,
-                    ServerName = collectionRow[0],
-                    Enabled = collectionRow[1],
-                    CpuUsage = Double.Parse(collectionRow[2].Replace("%", "")),
-                    MemoryUsage = Double.Parse(collectionRow[3].Replace("%", "")),
-                    CdriveFreeSpace = Double.Parse(collectionRow[4].Replace("%", "")),
-                    DdriveFreeSpace = Double.Parse(collectionRow[5].Replace("%", "")),
-                    Uptime = collectionRow[6],
-                    PendingReboot = collectionRow[7],
-                    SessionsTotal = Int32.Parse(collectionRow[8]),
-                    SessionsActive = Int32.Parse(collectionRow[9]),
-                    SessionsDisc = Int32.Parse(collectionRow[10]),
-                    SessionsNull = Int32.Parse(collectionRow[11])
-                };
+                    Console.WriteLine(ex.Message);
+                }
             }
         }
 
         // Insert the connection brokers to the database
-        static void InsertConnectionBrokerData(string[] emailBodyArray, string reportId)
+        static void InsertConnectionBrokerData(string[] emailBodyArray, string reportId, FarmServerMonitoringDB_TestContext context)
         {
-            // Create a new instance of the database context to interact with the database
-            var context = new FarmServerMonitoringDB_TestContext();
-
             // Get the connection brokers from the email body
             var connectionBrokers = emailBodyArray[3].Trim().Split(new[] { ", " }, StringSplitOptions.None);
 
             foreach (var connectionBroker in connectionBrokers)
             {
-                // Check if the connection broker has already existed in the database
-                var isConnectionBrokerExist = context.ConnectionBroker.Where(a => a.ServerName == connectionBroker).Any();
+                try
+                {
+                    // Check if the connection broker has already existed in the database
+                    var isConnectionBrokerExist = context.ConnectionBroker.Where(a => a.ServerName == connectionBroker).Any();
 
-                // Create the connection broker if it doesn't exist in database
-                if (!isConnectionBrokerExist)
-                    context.ConnectionBroker.Add(new ConnectionBroker() { ServerName = connectionBroker });
-                
-                // Map the connection broker to the report based on report ID
-                MapConnectionBrokerToReport(connectionBroker, reportId);
+                    // Create the connection broker if it doesn't exist in database
+                    if (!isConnectionBrokerExist)
+                        context.ConnectionBroker.Add(new ConnectionBroker() { ServerName = connectionBroker });
+
+                    // Map the connection broker to the report based on report ID
+                    MapConnectionBrokerToReport(connectionBroker, reportId, context);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.Message);
+                }
             }
-
-            context.SaveChanges();
         }
 
         // Map the connection broker to the report based on report ID
-        static void MapConnectionBrokerToReport(string connectionBroker, string reportId)
+        static void MapConnectionBrokerToReport(string connectionBroker, string reportId, FarmServerMonitoringDB_TestContext context)
         {
-            // Create a new instance of the database context to interact with the database
-            var context = new FarmServerMonitoringDB_TestContext();
-
             // Map the connection broker to the report ID
             var mapping = new ConnectionBrokerServerHealthMap()
             {
@@ -178,7 +178,6 @@ namespace FarmServerMonitoring
             };
 
             context.ConnectionBrokerServerHealthMap.Add(mapping);
-            context.SaveChanges();
         }
 
         static List<string> ExtractCollectionTableData(string[] emailBodyArray)
