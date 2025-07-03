@@ -1,10 +1,13 @@
 ﻿using FarmServerMonitoring.DTOs;
 using FarmServerMonitoring.Models;
 using Microsoft.EntityFrameworkCore.Internal;
+using Microsoft.EntityFrameworkCore.Query;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Remoting.Contexts;
+using System.Text.RegularExpressions;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.Tab;
 
 namespace FarmServerMonitoring
 {
@@ -21,67 +24,90 @@ namespace FarmServerMonitoring
                 Console.WriteLine("Mail Subject: " + mail.EmailSubject);
 
                 // Extract the data from email report to insert data records into the database
-                //InsertMailReportDataIntoDatabase(mail.EmailBody);
+                InsertMailReportDataIntoDatabase(mail.EmailBody);
 
-                Console.WriteLine("Report inserted successfully.");
+                //var bodyArray = mail.EmailBody.Split(new[] { "\r\n", "\n" }, StringSplitOptions.None);
+                //var filteredBodyArray = bodyArray.Where(x => !string.IsNullOrWhiteSpace(x)).ToArray();
+
+                //int j = 0;
+                //foreach (var line in filteredBodyArray)
+                //{
+                //    Console.WriteLine("Index [" + j + "]: " + line);
+                //    j++;
+                //}
+
+                Console.WriteLine("Report insertd successfully.");
                 Console.WriteLine(new string('=', 100));
                 i = i + 1;
             }
-
+            
+            Console.WriteLine("The End");
             Console.ReadKey();
         }
 
         // Extract the data from email report text body and insert data to database
         static void InsertMailReportDataIntoDatabase(string emailTextBody)
         {
-            var reportId = InsertReportData(emailTextBody);
+            var bodyArray = emailTextBody.Split(new[] { "\r\n", "\n" }, StringSplitOptions.None);
+            var filteredBodyArray = bodyArray.Where(x => !string.IsNullOrWhiteSpace(x)).ToArray();
 
-            InsertCollectionData(emailTextBody, reportId);
-            InsertConnectionBrokerData(emailTextBody, reportId);
+            var reportId = InsertReportData(filteredBodyArray);
+
+            InsertCollectionData(filteredBodyArray, reportId);
+            InsertConnectionBrokerData(filteredBodyArray, reportId);
         }
 
         // Insert the report to the database
-        static string InsertReportData(string emailTextBody)
+        static string InsertReportData(string[] emailBodyArray)
         {
+            
             // Create a new instance of the database context to interact with the database
             var context = new FarmServerMonitoringDB_TestContext();
 
             // Create a server health report
-            var report = new ServerHealthReport()
+            try
             {
-                Id = "",
-                ReportName = "",
-                ScriptStartTime = DateTime.Now,
-                ScriptEndTime = DateTime.Now,
-                CollectionName = "",
-                CpuUsageAvg = Double.Parse("0".Replace("%", "")),
-                MemoryUsageAvg = Double.Parse("0".Replace("%", "")),
-                CdriveFreeSpaceAvg = Double.Parse("0".Replace("%", "")),
-                DdriveFreeSpaceAvg = Double.Parse("0".Replace("%", "")),
-                SessionsTotalAvg = Double.Parse("0"),
-                SessionsActiveAvg = Double.Parse("0"),
-                SessionsDiscAvg = Double.Parse("0"),
-                SessionsNullAvg = Double.Parse("0"),
-                SessionsTotalSum = Int32.Parse("0"),
-                SessionsActiveSum = Int32.Parse("0"),
-                SessionsDiscSum = Int32.Parse("0"),
-                SessionsNullSum = Int32.Parse("0")
-            };
+                var report = new ServerHealthReport()
+                {
+                    Id = DateTime.Parse(emailBodyArray[255].Replace(": ", "")).ToString("MMddyyyyHHmmss"),
+                    ReportName = emailBodyArray[0],
+                    ScriptStartTime = DateTime.Parse(emailBodyArray[255].Replace(": ", "")),
+                    ScriptEndTime = DateTime.Parse(emailBodyArray[257].Replace(": ", "")),
+                    CollectionName = emailBodyArray[19].Split(' ')[1],
+                    CpuUsageAvg = Double.Parse(emailBodyArray[202].Replace("%", "").Trim()),
+                    MemoryUsageAvg = Double.Parse(emailBodyArray[203].Replace("%", "").Trim()),
+                    CdriveFreeSpaceAvg = Double.Parse(emailBodyArray[204].Replace("%", "").Trim()),
+                    DdriveFreeSpaceAvg = Double.Parse(emailBodyArray[205].Replace("%", "").Trim()),
+                    SessionsTotalAvg = Double.Parse(emailBodyArray[206].Trim()),
+                    SessionsActiveAvg = Double.Parse(emailBodyArray[207].Trim()),
+                    SessionsDiscAvg = Double.Parse(emailBodyArray[208].Trim()),
+                    SessionsNullAvg = Double.Parse(emailBodyArray[209].Trim()),
+                    SessionsTotalSum = Int32.Parse(emailBodyArray[211].Trim()),
+                    SessionsActiveSum = Int32.Parse(emailBodyArray[212].Trim()),
+                    SessionsDiscSum = Int32.Parse(emailBodyArray[213].Trim()),
+                    SessionsNullSum = Int32.Parse(emailBodyArray[214].Trim())
+                };
+                context.ServerHealthReport.Add(report);
+                context.SaveChanges();
 
-            context.ServerHealthReport.Add(report);
-            context.SaveChanges();
+                return report.Id;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+            return "";
 
-            return report.Id;
         }
 
         // Insert the collections to the database
-        static void InsertCollectionData(string emailTextBody, string reportId)
+        static void InsertCollectionData(string[] emailBodyArray, string reportId)
         {
             // Create a new instance of the database context to interact with the database
             var context = new FarmServerMonitoringDB_TestContext();
 
             // Get all the collections from the email body
-            var collections = new List<string>();
+            var collections = ExtractCollectionTableData(emailBodyArray);
 
             // Initialize the number of rows and columns in the collection table
             var numRow = 14;
@@ -114,13 +140,13 @@ namespace FarmServerMonitoring
         }
 
         // Insert the connection brokers to the database
-        static void InsertConnectionBrokerData(string emailTextBody, string reportId)
+        static void InsertConnectionBrokerData(string[] emailBodyArray, string reportId)
         {
             // Create a new instance of the database context to interact with the database
             var context = new FarmServerMonitoringDB_TestContext();
 
             // Get the connection brokers from the email body
-            var connectionBrokers = new List<string>();
+            var connectionBrokers = emailBodyArray[3].Trim().Split(new[] { ", " }, StringSplitOptions.None);
 
             foreach (var connectionBroker in connectionBrokers)
             {
@@ -153,6 +179,37 @@ namespace FarmServerMonitoring
 
             context.ConnectionBrokerServerHealthMap.Add(mapping);
             context.SaveChanges();
+        }
+
+        static List<string> ExtractCollectionTableData(string[] emailBodyArray)
+        {
+            var tableData = new List<string>();
+            bool inTable = false;
+            string[] headerKeywords = new[]
+            {
+                "Server Name", "Enabled", "CPU %", "Memory %", "C:\\ % Free", "D:\\ % Free", "Uptime", "Pending Reboot", "Sessions", "Total", "Active", "Disc", "Null"
+            };
+
+            foreach (var line in emailBodyArray)
+            {
+                if (line.Contains("Collection: PEN7VAV01"))
+                {
+                    inTable = true;
+                    continue;
+                }
+                if (inTable && line.Contains("Average"))
+                {
+                    break;
+                }
+                if (inTable)
+                {
+                    if (string.IsNullOrWhiteSpace(line) || headerKeywords.Any(keyword => line.Contains(keyword)))
+                        continue;
+
+                    tableData.Add(line.Trim());
+                }
+            }
+            return tableData;
         }
     }
 }

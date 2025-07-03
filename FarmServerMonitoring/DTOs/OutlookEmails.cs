@@ -44,8 +44,8 @@ namespace FarmServerMonitoring.DTOs
                     };
                     listEmailDetails.Add(emailDetails);
 
-                    item.UnRead = false;
-                    item.Save();
+                    //item.UnRead = false;
+                    //item.Save();
                     ReleaseComObject(item);
                 }
             }
