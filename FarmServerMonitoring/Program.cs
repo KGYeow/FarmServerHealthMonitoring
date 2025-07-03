@@ -1,13 +1,9 @@
 ﻿using FarmServerMonitoring.DTOs;
 using FarmServerMonitoring.Models;
 using Microsoft.EntityFrameworkCore.Internal;
-using Microsoft.EntityFrameworkCore.Query;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.Remoting.Contexts;
-using System.Text.RegularExpressions;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement.Tab;
 
 namespace FarmServerMonitoring
 {
@@ -22,6 +18,7 @@ namespace FarmServerMonitoring
             {
                 Console.WriteLine("Mail No: " + i);
                 Console.WriteLine("Mail Subject: " + mail.EmailSubject);
+                Console.WriteLine("Mail Received Time: " + mail.EmailReceivedTime);
 
                 // Extract the data from email report to insert data records into the database
                 InsertMailReportDataIntoDatabase(mail.EmailBody);
@@ -30,7 +27,7 @@ namespace FarmServerMonitoring
                 i = i + 1;
             }
             
-            Console.WriteLine("The End");
+            Console.WriteLine("Process End");
             Console.ReadKey();
         }
 
@@ -41,7 +38,7 @@ namespace FarmServerMonitoring
             var filteredBodyArray = bodyArray.Where(x => !string.IsNullOrWhiteSpace(x)).ToArray();
 
             // Create a new instance of the database context to interact with the database
-            using (var context = new FarmServerMonitoringDB_TestContext())
+            using (var context = new FarmServerMonitoringDBContext())
             {
                 var reportId = InsertReportData(filteredBodyArray, context);
 
@@ -49,7 +46,7 @@ namespace FarmServerMonitoring
                 var isReportExist = context.ServerHealthReport.Where(a => a.Id == reportId).Any();
                 if (isReportExist)
                 {
-                    Console.WriteLine("Duplicated Report.");
+                    Console.WriteLine("Skip duplicated report.");
                     return;
                 }
 
@@ -58,11 +55,11 @@ namespace FarmServerMonitoring
 
                 context.SaveChanges();
             }
-            Console.WriteLine("Report insert successfully.");
+            Console.WriteLine("Insert report successfully.");
         }
 
         // Insert the report to the database
-        static string InsertReportData(string[] emailBodyArray, FarmServerMonitoringDB_TestContext context)
+        static string InsertReportData(string[] emailBodyArray, FarmServerMonitoringDBContext context)
         {
             // Create a server health report
             try
@@ -98,7 +95,7 @@ namespace FarmServerMonitoring
         }
 
         // Insert the collections to the database
-        static void InsertCollectionData(string[] emailBodyArray, string reportId, FarmServerMonitoringDB_TestContext context)
+        static void InsertCollectionData(string[] emailBodyArray, string reportId, FarmServerMonitoringDBContext context)
         {
             // Get all the collections from the email body
             var collections = ExtractCollectionTableData(emailBodyArray);
@@ -141,7 +138,7 @@ namespace FarmServerMonitoring
         }
 
         // Insert the connection brokers to the database
-        static void InsertConnectionBrokerData(string[] emailBodyArray, string reportId, FarmServerMonitoringDB_TestContext context)
+        static void InsertConnectionBrokerData(string[] emailBodyArray, string reportId, FarmServerMonitoringDBContext context)
         {
             // Get the connection brokers from the email body
             var connectionBrokers = emailBodyArray[3].Trim().Split(new[] { ", " }, StringSplitOptions.None);
@@ -168,7 +165,7 @@ namespace FarmServerMonitoring
         }
 
         // Map the connection broker to the report based on report ID
-        static void MapConnectionBrokerToReport(string connectionBroker, string reportId, FarmServerMonitoringDB_TestContext context)
+        static void MapConnectionBrokerToReport(string connectionBroker, string reportId, FarmServerMonitoringDBContext context)
         {
             // Map the connection broker to the report ID
             var mapping = new ConnectionBrokerServerHealthMap()

@@ -169,7 +169,7 @@
     <Compile Include="Models\Collection.cs" />
     <Compile Include="Models\ConnectionBroker.cs" />
     <Compile Include="Models\ConnectionBrokerServerHealthMap.cs" />
-    <Compile Include="Models\FarmServerMonitoringDB_TestContext.cs" />
+    <Compile Include="Models\FarmServerMonitoringDBContext.cs" />
     <Compile Include="Models\ServerHealthReport.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

@@ -8,13 +8,13 @@ using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace FarmServerMonitoring.Models
 {
-    public partial class FarmServerMonitoringDB_TestContext : DbContext
+    public partial class FarmServerMonitoringDBContext : DbContext
     {
-        public FarmServerMonitoringDB_TestContext()
+        public FarmServerMonitoringDBContext()
         {
         }
 
-        public FarmServerMonitoringDB_TestContext(DbContextOptions<FarmServerMonitoringDB_TestContext> options)
+        public FarmServerMonitoringDBContext(DbContextOptions<FarmServerMonitoringDBContext> options)
             : base(options)
         {
         }
@@ -29,7 +29,7 @@ namespace FarmServerMonitoring.Models
             if (!optionsBuilder.IsConfigured)
             {
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. See http://go.microsoft.com/fwlink/?LinkId=723263 for guidance on storing connection strings.
-                optionsBuilder.UseSqlServer("Server=awase1pensql81;Database=FarmServerMonitoringDB_Test;Trusted_Connection=True;TrustServerCertificate=True;");
+                optionsBuilder.UseSqlServer("Server=awase1pensql81;Database=FarmServerMonitoringDB;Trusted_Connection=True;TrustServerCertificate=True;");
             }
         }
 
@@ -46,7 +46,8 @@ namespace FarmServerMonitoring.Models
                 entity.Property(e => e.Enabled)
                     .IsRequired()
                     .HasMaxLength(10)
-                    .IsUnicode(false);
+                    .IsUnicode(false)
+                    .HasDefaultValueSql("('No')");
 
                 entity.Property(e => e.PendingReboot)
                     .IsRequired()

@@ -8,6 +8,7 @@ namespace FarmServerMonitoring.DTOs
     {
         public string EmailFrom { get; set; }
         public string EmailSubject { get; set; }
+        public DateTime EmailReceivedTime { get; set; }
         public string EmailBody { get; set; }
 
         public static List<OutlookEmails> ReadMailItems(string readStatus) 
@@ -34,12 +35,22 @@ namespace FarmServerMonitoring.DTOs
                 else
                     mailItems = inboxFolder.Items;
 
+                // Retrieve and freeze all the email before processing
+                List<MailItem> fixedMailItems = new List<MailItem>();
                 foreach (MailItem item in mailItems)
+                {
+                    if (item.Subject == "PEN7-2 RDS Health report - Asia")
+                        fixedMailItems.Add(item);
+                }   
+
+                // Now process after emails are frozen
+                foreach (MailItem item in fixedMailItems)
                 {
                     emailDetails = new OutlookEmails
                     {
                         EmailFrom = item.SenderEmailAddress,
                         EmailSubject = item.Subject,
+                        EmailReceivedTime = item.ReceivedTime,
                         EmailBody = item.Body
                     };
                     listEmailDetails.Add(emailDetails);
