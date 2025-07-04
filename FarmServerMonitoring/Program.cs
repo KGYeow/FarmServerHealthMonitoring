@@ -11,23 +11,31 @@ namespace FarmServerMonitoring
     {
         static void Main(string[] args)
         {
-            var mails = OutlookEmails.ReadMailItems("false");
+            var mails = OutlookEmails.ReadMailItems("Unread");
             int i = 1;
 
-            foreach (var mail in mails)
+            if (mails.Count != 0)
             {
-                Console.WriteLine("Mail No: " + i);
-                Console.WriteLine("Mail Subject: " + mail.EmailSubject);
-                Console.WriteLine("Mail Received Time: " + mail.EmailReceivedTime);
+                foreach (var mail in mails)
+                {
+                    Console.WriteLine("Mail No: " + i);
+                    Console.WriteLine("Mail Subject: " + mail.EmailSubject);
+                    Console.WriteLine("Mail Received Time: " + mail.EmailReceivedTime);
+                    //Console.WriteLine("Mail Body Start ---");
+                    //Console.WriteLine(mail.EmailBody);
+                    //Console.WriteLine("Mail Body End ---");
 
-                // Extract the data from email report to insert data records into the database
-                InsertMailReportDataIntoDatabase(mail.EmailBody);
+                    // Extract the data from email report to insert data records into the database
+                    InsertMailReportDataIntoDatabase(mail.EmailBody);
 
-                Console.WriteLine(new string('=', 100));
-                i = i + 1;
+                    Console.WriteLine(new string('=', 100));
+                    i = i + 1;
+                }
             }
-            
-            Console.WriteLine("Process End");
+            else
+                Console.WriteLine("No new mail report found.");
+
+            Console.WriteLine("Process end");
             Console.ReadKey();
         }
 
@@ -46,7 +54,7 @@ namespace FarmServerMonitoring
                 var isReportExist = context.ServerHealthReport.Where(a => a.Id == reportId).Any();
                 if (isReportExist)
                 {
-                    Console.WriteLine("Skip duplicated report.");
+                    Console.WriteLine("Skip duplicated report");
                     return;
                 }
 
@@ -55,7 +63,7 @@ namespace FarmServerMonitoring
 
                 context.SaveChanges();
             }
-            Console.WriteLine("Insert report successfully.");
+            Console.WriteLine("Insert report successfully");
         }
 
         // Insert the report to the database

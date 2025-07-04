@@ -1,6 +1,7 @@
 ﻿using Microsoft.Office.Interop.Outlook;
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 
 namespace FarmServerMonitoring.DTOs
 {
@@ -25,12 +26,13 @@ namespace FarmServerMonitoring.DTOs
             {
                 outlookApplication = new Application();
                 outlookNamespace = outlookApplication.GetNamespace("MAPI");
+                outlookNamespace.Logon("Outlook", Missing.Value, false, true);
                 //inboxFolder = outlookNamespace.GetDefaultFolder(OlDefaultFolders.olFolderInbox);
                 inboxFolder = outlookNamespace.Folders[1].Folders["Farm Health Report"];
 
-                if (readStatus == "true")
+                if (readStatus == "Read")
                     mailItems = inboxFolder.Items.Restrict("[Unread]=false");
-                else if (readStatus == "false")
+                else if (readStatus == "Unread")
                     mailItems = inboxFolder.Items.Restrict("[Unread]=true");
                 else
                     mailItems = inboxFolder.Items;
