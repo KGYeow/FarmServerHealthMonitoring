@@ -19,19 +19,6 @@ namespace FarmServerMonitoring.Models
         public string ReportName { get; set; }
         public DateTime ScriptStartTime { get; set; }
         public DateTime ScriptEndTime { get; set; }
-        public string CollectionName { get; set; }
-        public double CpuUsageAvg { get; set; }
-        public double MemoryUsageAvg { get; set; }
-        public double CdriveFreeSpaceAvg { get; set; }
-        public double DdriveFreeSpaceAvg { get; set; }
-        public double SessionsTotalAvg { get; set; }
-        public double SessionsActiveAvg { get; set; }
-        public double SessionsDiscAvg { get; set; }
-        public double SessionsNullAvg { get; set; }
-        public int SessionsTotalSum { get; set; }
-        public int SessionsActiveSum { get; set; }
-        public int SessionsDiscSum { get; set; }
-        public int SessionsNullSum { get; set; }
 
         public virtual ICollection<Collection> Collection { get; set; }
         public virtual ICollection<ConnectionBrokerServerHealthMap> ConnectionBrokerServerHealthMap { get; set; }

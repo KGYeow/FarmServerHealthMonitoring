@@ -1,11 +1,9 @@
 ﻿using MailKit;
 using MailKit.Net.Imap;
-using MailKit.Search;
 using MailKit.Security;
 using MimeKit;
 using System;
 using System.Collections.Generic;
-using System.Security.Cryptography;
 
 namespace FarmServerMonitoring.DTOs
 {
@@ -25,20 +23,28 @@ namespace FarmServerMonitoring.DTOs
             {
                 // Connect to Office365 IMAP
                 client.Connect("outlook.office365.com", 993, SecureSocketOptions.SslOnConnect);
+
+                // Remove unnecessary authentication mechanisms
+                //client.AuthenticationMechanisms.Remove("XOAUTH2");
+
                 client.Authenticate("Kok_Yeow@jabil.com", "");
 
                 // Open the Inbox
-                var inbox = client.Inbox;
-                inbox.Open(MailKit.FolderAccess.ReadWrite);
+                var root = client.GetFolder(client.PersonalNamespaces[0]);
+                var inbox = root.GetSubfolder("Farm Server Report");
+                inbox.Open(FolderAccess.ReadWrite);
+
+                //Console.WriteLine("Can open inbox folder?:" + inbox.CanOpen);
 
                 // Search for unread messages with specific subject
                 //var uids = inbox.Search(SearchQuery.NotSeen.And(SearchQuery.SubjectContains("PEN7-2 RDS Health report - Asia")));
 
-                int maxEmails = 2;
-                int start = inbox.Count - 1;
-                int end = Math.Max(0, inbox.Count - maxEmails);
+                //int maxEmails = 5;
+                //int start = inbox.Count - 1;
+                //int end = Math.Max(0, inbox.Count - maxEmails);
 
-                for (int i = start; i >= end; i--)
+                // Loop through all messages in the inbox
+                for (int i = 0; i < inbox.Count; i++)
                 {
                     var message = inbox.GetMessage(i);
                     emails.Add(message);

@@ -9,21 +9,28 @@ namespace FarmServerMonitoring.Models
 {
     public partial class Collection
     {
+        public Collection()
+        {
+            CollectionRecord = new HashSet<CollectionRecord>();
+        }
+
         public int Id { get; set; }
         public string ReportId { get; set; }
-        public string ServerName { get; set; }
-        public string Enabled { get; set; }
-        public double CpuUsage { get; set; }
-        public double MemoryUsage { get; set; }
-        public double CdriveFreeSpace { get; set; }
-        public double DdriveFreeSpace { get; set; }
-        public string Uptime { get; set; }
-        public string PendingReboot { get; set; }
-        public int SessionsTotal { get; set; }
-        public int SessionsActive { get; set; }
-        public int SessionsDisc { get; set; }
-        public int SessionsNull { get; set; }
+        public string Name { get; set; }
+        public string CpuUsageAvg { get; set; }
+        public string MemoryUsageAvg { get; set; }
+        public string CdriveFreeSpaceAvg { get; set; }
+        public string DdriveFreeSpaceAvg { get; set; }
+        public string SessionsTotalAvg { get; set; }
+        public string SessionsActiveAvg { get; set; }
+        public string SessionsDiscAvg { get; set; }
+        public string SessionsNullAvg { get; set; }
+        public string SessionsTotalSum { get; set; }
+        public string SessionsActiveSum { get; set; }
+        public string SessionsDiscSum { get; set; }
+        public string SessionsNullSum { get; set; }
 
         public virtual ServerHealthReport Report { get; set; }
+        public virtual ICollection<CollectionRecord> CollectionRecord { get; set; }
     }
 }
