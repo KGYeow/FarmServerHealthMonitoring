@@ -1,4 +1,5 @@
 ﻿using HtmlAgilityPack;
+using System;
 using System.Collections.Generic;
 using System.IO;
 
@@ -12,23 +13,30 @@ namespace FarmServerMonitoring.DTOs
         // Retrieve the list of document file report text content from synced local OneDrive
         public static List<DocumentFile> ReadDocsFromLocalOneDrive()
         {
-            // Get all the htm files' path from the folder path
-            string folderPath = @"C:\Users\4093094\Jabil\NurulNajihah AbdulRahim - FARM HEALTH DATA";
-            var filePaths = Directory.GetFiles(folderPath, "*.htm");
-
             var allDocs = new List<DocumentFile>();
 
-            foreach (var filePath in filePaths)
+            try
             {
-                var doc = new HtmlDocument();
-                doc.Load(filePath);
+                // Get all the htm files' path from the folder path
+                string folderPath = @"C:\Users\4093094\Jabil\NurulNajihah AbdulRahim - FARM HEALTH DATA";
+                var filePaths = Directory.GetFiles(folderPath, "*.htm");
 
-                // Extract document content in text string
-                allDocs.Add(new DocumentFile()
+                foreach (var filePath in filePaths)
                 {
-                    FileName = Path.GetFileName(filePath),
-                    FileContent = doc.DocumentNode.InnerText,
-                });
+                    var doc = new HtmlDocument();
+                    doc.Load(filePath);
+
+                    // Extract document content in text string
+                    allDocs.Add(new DocumentFile()
+                    {
+                        FileName = Path.GetFileName(filePath),
+                        FileContent = doc.DocumentNode.InnerText,
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message + "\n");
             }
 
             return allDocs;

@@ -18,27 +18,41 @@ namespace FarmServerMonitoring
                 int i = 1;
                 foreach (var docReport in docReportContentList)
                 {
-                    Console.WriteLine("Document No  : " + i);
-                    Console.WriteLine("Document Name: " + docReport.FileName);
+                    Console.ForegroundColor = ConsoleColor.Cyan;
+                    Console.WriteLine($"Document #{i}");
+                    Console.WriteLine($"Name    : {docReport.FileName}");
                     Console.WriteLine("");
 
                     // Insert the document report data into the database
                     InsertDocReportDataIntoDatabase(docReport.FileContent);
 
-                    Console.WriteLine(new string('=', 50));
+                    Console.ForegroundColor = ConsoleColor.DarkGray;
+                    Console.WriteLine(new string('-', 50));
+                    Console.ResetColor();
                     i = i + 1;
                 }
             }
             else
-                Console.WriteLine("No new document report found.");
+            {
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                Console.WriteLine("[INFO] No document report found.");
+                Console.ResetColor();
+            }
 
-            Console.WriteLine("Process end");
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("\n[SUCCESS] Process completed.");
+            Console.ResetColor();
+
             Console.ReadKey();
         }
 
         // Extract the data from the document report text body and insert data to database
         static void InsertDocReportDataIntoDatabase(string docText)
         {
+            Console.ForegroundColor = ConsoleColor.Blue;
+            Console.WriteLine("Starting database insertion process...");
+            Console.ResetColor();
+
             // Create a new instance of the database context to interact with the database
             using (var context = new FarmServerMonitoringDB_TestContext())
             {
@@ -49,7 +63,9 @@ namespace FarmServerMonitoring
                 var isReportExist = context.ServerHealthReport.Where(a => a.Id == reportId).Any();
                 if (isReportExist)
                 {
-                    Console.WriteLine("Skip duplicated report");
+                    Console.ForegroundColor = ConsoleColor.Yellow;
+                    Console.WriteLine("[INFO] Skipped: Duplicate report detected.");
+                    Console.ResetColor();
                     return;
                 }
 
@@ -61,7 +77,10 @@ namespace FarmServerMonitoring
 
                 context.SaveChanges();
             }
-            Console.WriteLine("Insert report successfully");
+
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("[SUCCESS] Report inserted successfully.\n");
+            Console.ResetColor();
         }
 
         // Insert the report to the database
