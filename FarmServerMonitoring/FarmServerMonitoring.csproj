@@ -308,6 +308,7 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Helpers\ConsoleLogger.cs" />
     <Compile Include="DTOs\MailKitReader.cs" />
     <Compile Include="DTOs\DocumentFile.cs" />
     <Compile Include="DTOs\SharePointEmail.cs" />

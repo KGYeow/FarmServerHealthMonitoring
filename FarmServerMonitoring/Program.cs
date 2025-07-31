@@ -1,4 +1,5 @@
 ﻿using FarmServerMonitoring.DTOs;
+using FarmServerMonitoring.Helpers;
 using FarmServerMonitoring.Models;
 using System;
 using System.Collections.Generic;
@@ -11,6 +12,8 @@ namespace FarmServerMonitoring
     {
         static void Main(string[] args)
         {
+            DisplayProgramTitle();
+
             var docReportContentList = DocumentFile.ReadDocsFromLocalOneDrive();
 
             if (docReportContentList.Count != 0)
@@ -18,7 +21,6 @@ namespace FarmServerMonitoring
                 int i = 1;
                 foreach (var docReport in docReportContentList)
                 {
-                    Console.ForegroundColor = ConsoleColor.Cyan;
                     Console.WriteLine($"Document #{i}");
                     Console.WriteLine($"Name    : {docReport.FileName}");
                     Console.WriteLine("");
@@ -34,24 +36,32 @@ namespace FarmServerMonitoring
             }
             else
             {
-                Console.ForegroundColor = ConsoleColor.Yellow;
-                Console.WriteLine("[INFO] No document report found.");
-                Console.ResetColor();
+                ConsoleLogger.LogInfo("No document report found.");
             }
 
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("\n[SUCCESS] Process completed.");
-            Console.ResetColor();
+            Console.WriteLine();
+            ConsoleLogger.LogInfo("Program execution completed.");
 
+            Console.WriteLine("\nPress any key to exit...");
             Console.ReadKey();
+        }
+
+        // Display the program title
+        static void DisplayProgramTitle()
+        {
+            Console.Clear();
+            Console.ForegroundColor = ConsoleColor.Cyan;
+            Console.WriteLine("==================================================");
+            Console.WriteLine("         FARM HEALTH REPORT PROCESSOR             ");
+            Console.WriteLine("==================================================");
+            Console.ResetColor();
+            Console.WriteLine();
         }
 
         // Extract the data from the document report text body and insert data to database
         static void InsertDocReportDataIntoDatabase(string docText)
         {
-            Console.ForegroundColor = ConsoleColor.Blue;
-            Console.WriteLine("Starting database insertion process...");
-            Console.ResetColor();
+            ConsoleLogger.LogStep("Starting database insertion process...");
 
             // Create a new instance of the database context to interact with the database
             using (var context = new FarmServerMonitoringDB_TestContext())
@@ -63,9 +73,7 @@ namespace FarmServerMonitoring
                 var isReportExist = context.ServerHealthReport.Where(a => a.Id == reportId).Any();
                 if (isReportExist)
                 {
-                    Console.ForegroundColor = ConsoleColor.Yellow;
-                    Console.WriteLine("[INFO] Skipped: Duplicate report detected.");
-                    Console.ResetColor();
+                    ConsoleLogger.LogInfo("Skipped: Duplicate report detected.");
                     return;
                 }
 
@@ -78,9 +86,7 @@ namespace FarmServerMonitoring
                 context.SaveChanges();
             }
 
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("[SUCCESS] Report inserted successfully.");
-            Console.ResetColor();
+            ConsoleLogger.LogSuccess("Report inserted successfully.");
         }
 
         // Insert the report to the database
@@ -110,7 +116,8 @@ namespace FarmServerMonitoring
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
+                ConsoleLogger.LogError("An unexpected error occurred.");
+                Console.WriteLine($"Details: {ex.Message}\n");
             }
             return "";
         }
@@ -266,7 +273,8 @@ namespace FarmServerMonitoring
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
+                ConsoleLogger.LogError("An unexpected error occurred.");
+                Console.WriteLine($"Details: {ex.Message}\n");
             }
         }
 
@@ -292,7 +300,8 @@ namespace FarmServerMonitoring
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine(ex.Message);
+                    ConsoleLogger.LogError("An unexpected error occurred.");
+                    Console.WriteLine($"Details: {ex.Message}\n");
                 }
             }
         }

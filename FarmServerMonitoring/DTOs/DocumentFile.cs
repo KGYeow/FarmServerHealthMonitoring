@@ -1,4 +1,5 @@
-﻿using HtmlAgilityPack;
+﻿using FarmServerMonitoring.Helpers;
+using HtmlAgilityPack;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -17,9 +18,13 @@ namespace FarmServerMonitoring.DTOs
 
             try
             {
+                ConsoleLogger.LogStep("Retrieving document file reports from local folder...");
+
                 // Get all the htm files' path from the folder path
                 string folderPath = @"C:\Users\4093094\Jabil\NurulNajihah AbdulRahim - FARM HEALTH DATA";
                 var filePaths = Directory.GetFiles(folderPath, "*.htm");
+
+                ConsoleLogger.LogInfo($"{filePaths.Length} document(s) found.");
 
                 foreach (var filePath in filePaths)
                 {
@@ -36,9 +41,11 @@ namespace FarmServerMonitoring.DTOs
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message + "\n");
+                ConsoleLogger.LogError("An unexpected error occurred.");
+                Console.WriteLine($"Details: {ex.Message}");
             }
 
+            Console.WriteLine();
             return allDocs;
         }
     }
