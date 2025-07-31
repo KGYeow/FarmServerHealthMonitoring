@@ -188,10 +188,10 @@ namespace FarmServerMonitoring.Models
 
             modelBuilder.Entity<ConnectionBroker>(entity =>
             {
-                entity.HasKey(e => e.ServerName)
+                entity.HasKey(e => e.Name)
                     .HasName("PK_ConnectionBroker_1");
 
-                entity.Property(e => e.ServerName).HasMaxLength(50);
+                entity.Property(e => e.Name).HasMaxLength(50);
             });
 
             modelBuilder.Entity<ConnectionBrokerServerHealthMap>(entity =>

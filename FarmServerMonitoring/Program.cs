@@ -79,7 +79,7 @@ namespace FarmServerMonitoring
             }
 
             Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("[SUCCESS] Report inserted successfully.\n");
+            Console.WriteLine("[SUCCESS] Report inserted successfully.");
             Console.ResetColor();
         }
 
@@ -281,11 +281,11 @@ namespace FarmServerMonitoring
                 try
                 {
                     // Check if the connection broker has already existed in the database
-                    var isConnectionBrokerExist = context.ConnectionBroker.Where(a => a.ServerName == connectionBroker).Any();
+                    var isConnectionBrokerExist = context.ConnectionBroker.Where(a => a.Name == connectionBroker).Any();
 
                     // Create the connection broker if it doesn't exist in database
                     if (!isConnectionBrokerExist)
-                        context.ConnectionBroker.Add(new ConnectionBroker() { ServerName = connectionBroker });
+                        context.ConnectionBroker.Add(new ConnectionBroker() { Name = connectionBroker });
 
                     // Map the connection broker to the report based on report ID
                     MapConnectionBrokerToReport(connectionBroker, reportId, context);

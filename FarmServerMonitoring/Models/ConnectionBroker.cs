@@ -14,7 +14,7 @@ namespace FarmServerMonitoring.Models
             ConnectionBrokerServerHealthMap = new HashSet<ConnectionBrokerServerHealthMap>();
         }
 
-        public string ServerName { get; set; }
+        public string Name { get; set; }
 
         public virtual ICollection<ConnectionBrokerServerHealthMap> ConnectionBrokerServerHealthMap { get; set; }
     }
